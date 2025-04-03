@@ -31,7 +31,7 @@ class TaskController extends Controller
         ]);
 
         $task = Task::create([
-            'user_id' => auth()->id(), // کاربر وارد شده را استفاده می‌کنیم
+            'user_id' => $request->user_id, // کاربر وارد شده را استفاده می‌کنیم
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'status' => $validated['status'],
@@ -70,6 +70,7 @@ class TaskController extends Controller
             'status' => ['sometimes', Rule::in(['in_progress', 'completed'])],
             'start_date' => 'nullable|string',
             'end_date' => 'nullable|string', // تاریخ پایان باید بعد از تاریخ شروع باشد
+            'user_id' => 'sometimes|integer|exists:users,id',
         ]);
 
 // بررسی اینکه تسک متعلق به کاربر وارد شده باشد

@@ -18,7 +18,10 @@ class TaskTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create();
-        $this->task = Task::factory()->create(['user_id' => $this->user->id]);
+        $this->task = Task::factory()->create([
+            'user_id' => $this->user->id,
+            'status' => 'in_progress' // مقدار معتبر برای status
+        ]);
     }
 
     /** @test */
@@ -38,15 +41,17 @@ class TaskTest extends TestCase
         $data = [
             'title' => 'New Task',
             'description' => 'Task Description',
-            'status' => 'pending',
-            'user_id' => $this->user->id
+            'status' => 'in_progress', // مقدار معتبر برای status
+            'user_id' => $this->user->id,
+            'start_date' => '2021-01-01',
+            'end_date' => '2021-01-01'
         ];
 
         $this->actingAs($this->user, 'sanctum')
             ->postJson('/api/tasks', $data)
             ->assertStatus(201)
             ->assertJson([
-                'message' => 'وظیقه ایجاد شد'
+                'message' => 'وظیفه ایجاد شد'
             ]);
     }
 
@@ -62,7 +67,10 @@ class TaskTest extends TestCase
     /** @test */
     public function it_can_update_a_task()
     {
-        $updatedData = ['title' => 'Updated Task Title'];
+        $updatedData = [
+            'title' => 'Updated Task Title',
+            'status' => 'completed' // مقدار معتبر برای status
+        ];
 
         $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/tasks/{$this->task->id}", $updatedData)
@@ -77,7 +85,20 @@ class TaskTest extends TestCase
             ->deleteJson("/api/tasks/{$this->task->id}")
             ->assertStatus(204);
 
-        $this->assertSoftDeleted('tasks', ['id' => $this->task->id]); // بررسی soft delete
+        $this->assertSoftDeleted('tasks', ['id' => $this->task->id]);
     }
 
+    /** @test */
+    public function it_rejects_invalid_status_values()
+    {
+        $invalidData = [
+            'title' => 'Invalid Task',
+            'status' => 'pending', // مقدار نامعتبر
+            'user_id' => $this->user->id
+        ];
+
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/tasks', $invalidData)
+            ->assertStatus(422); // بررسی خطای اعتبارسنجی
+    }
 }
